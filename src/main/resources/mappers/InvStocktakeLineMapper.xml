@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.upc.wms.mapper.InvStocktakeLineMapper">
+
+  <select id="selectDetailLines" resultType="com.upc.wms.vo.StocktakeLineVO">
+    SELECT
+      sl.stocktake_line_id AS stocktakeLineId,
+      sl.stocktake_id      AS stocktakeId,
+      sl.inventory_id      AS inventoryId,
+
+      sl.item_id           AS itemId,
+      mi.item_code         AS itemCode,
+      mi.item_name         AS itemName,
+
+      sl.batch_id          AS batchId,
+      mb.batch_no          AS batchNo,
+
+      sl.location_id       AS locationId,
+      wl.location_code     AS locationCode,
+
+      sl.book_qty          AS bookQty,
+      sl.counted_qty       AS countedQty,
+      sl.difference_qty    AS differenceQty,
+      sl.line_status       AS lineStatus
+
+    FROM inv_stocktake_line sl
+
+    LEFT JOIN md_item mi
+           ON mi.item_id = sl.item_id
+
+    LEFT JOIN md_batch mb
+           ON mb.batch_id = sl.batch_id
+
+    LEFT JOIN wh_location wl
+           ON wl.location_id = sl.location_id
+
+    WHERE sl.stocktake_id = #{stocktakeId}
+
+    ORDER BY sl.stocktake_line_id
+  </select>
+
+</mapper>

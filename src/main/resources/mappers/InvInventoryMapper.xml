@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.upc.wms.mapper.InvInventoryMapper">
+
+  <select id="selectInventoryTotalValue" resultType="java.math.BigDecimal">
+    SELECT COALESCE(ROUND(SUM(inv.onhand_qty * item.standard_cost), 2), 0)
+    FROM inv_inventory inv
+    INNER JOIN md_item item ON item.item_id = inv.item_id
+    WHERE inv.onhand_qty > 0
+    <if test="warehouseId != null">
+      AND inv.warehouse_id = #{warehouseId}
+    </if>
+  </select>
+
+  <select id="selectListWithDetail" resultType="com.upc.wms.vo.InvInventoryDetailVO">
+    SELECT
+      inv.inventory_id AS inventoryId,
+      inv.warehouse_id AS warehouseId,
+      inv.location_id AS locationId,
+      inv.item_id AS itemId,
+      inv.batch_id AS batchId,
+      mi.item_code AS itemCode,
+      mi.item_name AS itemName,
+      mb.batch_no AS batchNo,
+      wl.location_code AS locationCode,
+      inv.onhand_qty AS onhandQty,
+      inv.available_qty AS availableQty,
+      inv.reserved_qty AS reservedQty,
+      inv.frozen_qty AS frozenQty,
+      inv.inventory_status AS inventoryStatus,
+      inv.last_txn_at AS lastTxnAt
+    FROM inv_inventory inv
+    LEFT JOIN md_item mi ON mi.item_id = inv.item_id
+    LEFT JOIN md_batch mb ON mb.batch_id = inv.batch_id
+    LEFT JOIN wh_location wl ON wl.location_id = inv.location_id
+    ORDER BY inv.inventory_id DESC
+  </select>
+
+</mapper>

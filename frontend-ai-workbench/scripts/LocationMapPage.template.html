@@ -1,0 +1,373 @@
+<template>
+  <div class="map-page">
+    <header class="map-header">
+      <div>
+        <h1>库位地图</h1>
+        <p class="map-desc">仓库存储布局总览 · 查看各库位状态与库存占用</p>
+      </div>
+      <div class="map-header-right">
+        <div class="map-search-bar">
+          <input v-model="searchQuery" placeholder="按物料 / 批次检索库位" class="search-input" />
+          <button v-if="searchQuery || statusFilter" type="button" class="search-clear" @click="clearFilter">×</button>
+        </div>
+        <div class="map-legend">
+          <span class="legend-item"><span class="dot occupied"></span>占用</span>
+          <span class="legend-item"><span class="dot available"></span>空闲</span>
+          <span class="legend-item"><span class="dot frozen"></span>冻结</span>
+          <span class="legend-item"><span class="dot reserved"></span>预留</span>
+          <span class="legend-item"><span class="dot disabled"></span>停用</span>
+        </div>
+        <button class="tb-btn export-btn" @click="handleExport">导出</button>
+      </div>
+    </header>
+
+    <div class="map-tabs-row">
+      <div class="map-tabs">
+        <div v-if="zones.length === 0 && !loading" class="empty-zones">暂无库区数据，请先维护仓库库位</div>
+        <button
+          :class="['zone-tab', { active: activeZone === 'ALL' }]"
+          @click="activeZone = 'ALL'; locDialog = null; highlightedLoc = null"
+        >
+          <strong>ALL</strong>
+          <span>全部库区</span>
+        </button>
+        <button
+          v-for="z in zones"
+          :key="z.code"
+          :class="['zone-tab', { active: activeZone === z.code }]"
+          @click="activeZone = z.code; locDialog = null; highlightedLoc = null"
+        >
+          <strong>{{ z.code }}</strong>
+          <span>{{ z.name }}</span>
+        </button>
+      </div>
+    </div>
+    <div class="map-strip">
+      <div class="strip-item" :class="{ active: !statusFilter }" @click="clearFilter">
+        <span class="strip-num">{{ zoneStats.total }}</span>
+        <span class="strip-lbl">总库位数</span>
+      </div>
+      <div class="strip-item" :class="{ active: statusFilter === 'occupied' }" @click="setFilter('occupied')">
+        <span class="strip-num" style="color:#4b7a5f">{{ zoneStats.occupied }}</span>
+        <span class="strip-lbl">占用</span>
+      </div>
+      <div class="strip-item" :class="{ active: statusFilter === 'available' }" @click="setFilter('available')">
+        <span class="strip-num" style="color:#8ba896">{{ zoneStats.available }}</span>
+        <span class="strip-lbl">空闲</span>
+      </div>
+      <div class="strip-item" :class="{ active: statusFilter === 'frozen' }" @click="setFilter('frozen')">
+        <span class="strip-num" style="color:#b4553f">{{ zoneStats.frozen }}</span>
+        <span class="strip-lbl">冻结</span>
+      </div>
+      <div class="strip-item" :class="{ active: statusFilter === 'disabled' }" @click="setFilter('disabled')">
+        <span class="strip-num" style="color:#9caaa3">{{ zoneStats.disabled }}</span>
+        <span class="strip-lbl">停用</span>
+      </div>
+    </div>
+
+    <div class="map-body">
+      <div v-if="loading" class="loading-indicator">加载中...</div>
+      <div v-else-if="zones.length === 0" class="empty-state">暂无库区数据，请先在系统设置中维护仓库库位</div>
+      <template v-else>
+        <template v-if="activeZone === 'ALL'">
+          <div v-for="z in visibleZones" :key="z.code" class="zone-block">
+            <div class="zone-block-head">
+              <h3 class="zone-block-title">{{ z.name }}</h3>
+              <span class="zone-block-meta">{{ getZoneRacks(z.code).length }} 排 × {{ getZoneShelves(z.code).length }} 列 = {{ (zoneGrids[z.code] || []).length }} 库位</span>
+            </div>
+            <div class="map-floor">
+              <div class="floor-header" :style="{ gridTemplateColumns: getZoneGridCols(z.code) }">
+                <span class="floor-corner"></span>
+                <span v-for="s in getZoneShelves(z.code)" :key="s" class="floor-col-label">货架 {{ s }}</span>
+              </div>
+              <div v-for="rack in getZoneRacks(z.code)" :key="rack" class="floor-row" :style="{ gridTemplateColumns: getZoneGridCols(z.code) }">
+                <span class="floor-row-label">排 {{ rack }}</span>
+                <div
+                  v-for="loc in getZoneShelfLocs(z.code, rack)"
+                  :key="loc.locationCode"
+                  :class="['floor-cell', `cell-${loc.status}`, { active: locDialog === loc, muted: isLocMuted(loc) }]"
+                  @click="selectLoc(loc)"
+                  :title="loc.status === 'frozen' ? frozenTip() : undefined"
+                >
+                  <span class="cell-code">{{ loc.locationCode }}</span>
+                  <span class="cell-type">标准货架</span>
+                  <span class="cell-status"><i class="stat-dot" :class="loc.status"></i>{{ statusMap[loc.status]?.label }}</span>
+                  <div v-if="loc.status === 'occupied'" class="cell-items-stack">
+                    <div
+                      v-for="it in (loc.items || []).slice(0, 2)"
+                      :key="it.inventoryId"
+                      class="cell-item-row"
+                    >
+                      <span class="cell-item-name">{{ it.itemName || it.itemCode }}</span>
+                      <span class="cell-item-qty">{{ it.onhandQty }}</span>
+                    </div>
+                    <button
+                      v-if="loc.itemCount > 2"
+                      type="button"
+                      class="cell-more-btn"
+                      @click.stop="selectLoc(loc)"
+                    >
+                      +{{ loc.itemCount - 2 }} 种 · 展开
+                    </button>
+                    <span v-else-if="loc.itemCount > 1" class="cell-multi-hint">共 {{ loc.itemCount }} 种 · 合计 {{ loc.stock }}</span>
+                  </div>
+                  <button v-if="loc.status === 'available'" type="button" class="cell-action putaway-btn" @click.stop="openPutaway(loc)">+ 上架</button>
+                  <button
+                    v-if="loc.status === 'occupied' && loc.itemCount <= 1"
+                    type="button"
+                    class="cell-action pick-btn"
+                    @click.stop="openPick(loc)"
+                  >下架</button>
+                  <button
+                    v-if="loc.status === 'occupied' && loc.itemCount > 1"
+                    type="button"
+                    class="cell-action pick-btn"
+                    @click.stop="selectLoc(loc)"
+                  >明细</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+        <div v-else class="map-floor">
+          <div class="floor-header" :style="{ gridTemplateColumns: gridCols }">
+            <span class="floor-corner"></span>
+            <span v-for="s in gridShelves" :key="s" class="floor-col-label">货架 {{ s }}</span>
+          </div>
+          <div v-for="rack in racks" :key="rack" class="floor-row" :style="{ gridTemplateColumns: gridCols }">
+            <span class="floor-row-label">排 {{ rack }}</span>
+            <div
+              v-for="loc in getShelfLocs(rack)"
+              :key="loc.locationCode"
+              :class="['floor-cell', `cell-${loc.status}`, { active: locDialog === loc, muted: isLocMuted(loc) }]"
+              @click="selectLoc(loc)"
+              :title="loc.status === 'frozen' ? frozenTip() : undefined"
+            >
+              <span class="cell-code">{{ loc.locationCode }}</span>
+              <span class="cell-type">标准货架</span>
+              <span class="cell-status"><i class="stat-dot" :class="loc.status"></i>{{ statusMap[loc.status]?.label }}</span>
+              <div v-if="loc.status === 'occupied'" class="cell-items-stack">
+                <div
+                  v-for="it in (loc.items || []).slice(0, 2)"
+                  :key="it.inventoryId"
+                  class="cell-item-row"
+                >
+                  <span class="cell-item-name">{{ it.itemName || it.itemCode }}</span>
+                  <span class="cell-item-qty">{{ it.onhandQty }}</span>
+                </div>
+                <button
+                  v-if="loc.itemCount > 2"
+                  type="button"
+                  class="cell-more-btn"
+                  @click.stop="selectLoc(loc)"
+                >
+                  +{{ loc.itemCount - 2 }} 种 · 展开
+                </button>
+                <span v-else-if="loc.itemCount > 1" class="cell-multi-hint">共 {{ loc.itemCount }} 种 · 合计 {{ loc.stock }}</span>
+              </div>
+              <button v-if="loc.status === 'available'" type="button" class="cell-action putaway-btn" @click.stop="openPutaway(loc)">+ 上架</button>
+              <button
+                v-if="loc.status === 'occupied' && loc.itemCount <= 1"
+                type="button"
+                class="cell-action pick-btn"
+                @click.stop="openPick(loc)"
+              >下架</button>
+              <button
+                v-if="loc.status === 'occupied' && loc.itemCount > 1"
+                type="button"
+                class="cell-action pick-btn"
+                @click.stop="selectLoc(loc)"
+              >明细</button>
+            </div>
+          </div>
+        </div>
+        <div v-if="anomalyLocs.length > 0" class="anomaly-section">
+          <div class="anomaly-head">
+            <h3>异常库位</h3>
+            <span class="anomaly-badge">{{ anomalyLocs.length }} 条</span>
+          </div>
+          <p class="anomaly-desc">以下库位存在于库存记录中，但不在库位主数据中，可能是数据异常或已删除的库位。</p>
+          <div class="anomaly-grid">
+            <div v-for="loc in anomalyLocs" :key="loc.locationCode" class="anomaly-card">
+              <span class="anomaly-code">{{ loc.locationCode }}</span>
+              <span class="anomaly-item">{{ loc.item || '—' }}</span>
+              <span class="anomaly-qty">{{ loc.stock }} 件</span>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <div v-if="locDialog" class="overlay" @click="locDialog = null; highlightedLoc = null"></div>
+    <div v-if="locDialog" class="dialog">
+      <div class="dialog-head">
+        <span>库位明细 · {{ locDialog.locationCode }}</span>
+        <button class="dialog-close" @click="locDialog = null; highlightedLoc = null">×</button>
+      </div>
+      <div class="dialog-body">
+        <div class="dl-row"><span class="dl-lbl">库位编码</span><span class="dl-val">{{ locDialog.locationCode }}</span></div>
+        <div class="dl-row"><span class="dl-lbl">所属库区</span><span class="dl-val">{{ (zones || []).find(z => z.code === locDialog.zoneCode)?.name || locDialog.zone }}</span></div>
+        <div class="dl-row">
+          <span class="dl-lbl">库位状态</span>
+          <span :class="['info-badge', locDialog.status]">{{ statusMap[locDialog.status]?.label }}</span>
+        </div>
+        <template v-if="locDialog.status === 'occupied' || (locDialog.status === 'frozen' && (locDialog.items?.length || locDialog.item))">
+          <div class="dl-divider"></div>
+          <div class="dl-subtitle">
+            存放物料
+            <span v-if="locDialog.itemCount > 1" class="dl-subtitle-meta">共 {{ locDialog.itemCount }} 种 · 合计 {{ locDialog.stock }}</span>
+          </div>
+          <table class="dl-table">
+            <thead>
+              <tr>
+                <th>物料编码</th>
+                <th>物料名称</th>
+                <th>批次号</th>
+                <th>数量</th>
+                <th v-if="locDialog.status === 'occupied'" class="dl-actions-col">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="it in (locDialog.items || [])" :key="it.inventoryId">
+                <td><span class="code-text">{{ it.itemCode || '—' }}</span></td>
+                <td>{{ it.itemName || '—' }}</td>
+                <td><span class="batch-text">{{ it.batchNo || '—' }}</span></td>
+                <td class="dl-qty">{{ it.onhandQty || 0 }}</td>
+                <td v-if="locDialog.status === 'occupied'">
+                  <button type="button" class="dl-pick-btn" @click="openPick(locDialog, it)">下架</button>
+                </td>
+              </tr>
+              <tr v-if="!(locDialog.items || []).length">
+                <td :colspan="locDialog.status === 'occupied' ? 5 : 4" class="dl-empty-cell">暂无库存记录</td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-if="locDialog.status === 'frozen'" class="dl-warn">该库位库存已被冻结，不可出入库</div>
+        </template>
+        <template v-if="locDialog.status === 'available' || locDialog.status === 'disabled' || locDialog.status === 'reserved'">
+          <div class="dl-empty">该库位暂无存放物料</div>
+        </template>
+      </div>
+      <div class="dialog-foot">
+        <button class="tb-btn primary" @click="locDialog = null; highlightedLoc = null">关闭</button>
+      </div>
+    </div>
+
+    <div v-if="showPutawayDialog" class="overlay" @click="showPutawayDialog = false"></div>
+    <div v-if="showPutawayDialog" class="dialog op-dialog">
+      <div class="dialog-head">
+        <span>上架 · {{ putawayLoc?.locationCode }}</span>
+        <button class="dialog-close" @click="showPutawayDialog = false">×</button>
+      </div>
+      <div class="dialog-body">
+        <div class="dl-row"><span class="dl-lbl">目标库位</span><span class="dl-val">{{ putawayLoc?.locationCode }}</span></div>
+        <div class="dl-row"><span class="dl-lbl">物料编码</span>
+          <input v-model="putawayForm.material_code" class="dl-input" placeholder="输入物料编码" @input="onMatCodeChange" />
+        </div>
+        <div class="dl-row"><span class="dl-lbl">物料名称</span><span class="dl-val">{{ putawayForm.material_name || '—' }}</span></div>
+        <div class="dl-row"><span class="dl-lbl">批次号</span>
+          <input v-model="putawayForm.batch_no" class="dl-input" placeholder="输入批次号" />
+        </div>
+        <div class="dl-row"><span class="dl-lbl">上架数量</span><input v-model.number="putawayForm.qty" type="number" class="dl-input" placeholder="请输入数量" min="1" /></div>
+      </div>
+      <div class="dialog-foot">
+        <button class="tb-btn" @click="showPutawayDialog = false">取消</button>
+        <button class="tb-btn primary" @click="confirmPutaway">确认上架</button>
+      </div>
+    </div>
+
+    <div v-if="showPickDialog" class="overlay" @click="showPickDialog = false"></div>
+    <div v-if="showPickDialog" class="dialog op-dialog">
+      <div class="dialog-head">
+        <span>下架 · {{ pickLoc?.locationCode }}</span>
+        <button class="dialog-close" @click="showPickDialog = false">×</button>
+      </div>
+      <div class="dialog-body">
+        <div class="dl-row"><span class="dl-lbl">库位编码</span><span class="dl-val">{{ pickLoc?.locationCode }}</span></div>
+        <div class="dl-row"><span class="dl-lbl">物料名称</span><span class="dl-val">{{ pickLoc?.item || '—' }}</span></div>
+        <div class="dl-row"><span class="dl-lbl">批次号</span><span class="dl-val">{{ pickLoc?.batch || '—' }}</span></div>
+        <div class="dl-row"><span class="dl-lbl">当前库存</span><span class="dl-val">{{ pickLoc?.stock || 0 }}</span></div>
+        <div class="dl-row"><span class="dl-lbl">可用库存</span><span class="dl-val">{{ pickLoc?.availableQty ?? pickLoc?.stock ?? 0 }}</span></div>
+        <div class="dl-row"><span class="dl-lbl">下架数量</span><input v-model.number="pickForm.qty" type="number" class="dl-input" placeholder="请输入数量" min="1" :max="pickLoc?.availableQty ?? pickLoc?.stock" /></div>
+        <div class="dl-row"><span class="dl-lbl">下架原因</span>
+          <select v-model="pickForm.reason" class="dl-input">
+            <option value="">— 请选择原因 —</option>
+            <option v-for="r in pickReasons" :key="r" :value="r">{{ r }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button class="tb-btn" @click="showPickDialog = false">取消</button>
+        <button class="tb-btn primary danger" @click="confirmPick">确认下架</button>
+      </div>
+    </div>
+
+    <transition name="toast-fade">
+      <div v-if="toastMessage" class="toast">{{ toastMessage }}</div>
+    </transition>
+
+    <section class="loc-section">
+      <div class="loc-section-head">
+        <h2>库位清单</h2>
+        <div class="loc-toolbar">
+          <input v-model="tableSearch" placeholder="搜索库位编码 / 物料名称 / 批次号" class="loc-search" />
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="loc-table">
+          <thead>
+            <tr>
+              <th class="lc-code">库位编码</th>
+              <th class="lc-zone">所属库区</th>
+              <th class="lc-status">状态</th>
+              <th class="lc-item">物料编码</th>
+              <th class="lc-item-name">物料名称</th>
+              <th class="lc-batch">批次号</th>
+              <th class="lc-qty">占用数量</th>
+            </tr>
+          </thead>
+          <tbody ref="tableBodyRef">
+            <tr
+              v-for="row in pagedLocList"
+              :key="row.rowKey"
+              :class="{ 'loc-highlighted': highlightedLoc === row.locationCode }"
+            >
+              <td class="lc-code"><span class="code-text">{{ row.locationCode }}</span></td>
+              <td class="lc-zone">{{ (zones || []).find(z => z.code === row.zoneCode)?.name || row.zone }}</td>
+              <td class="lc-status">
+                <span :class="['status-tag', statusMap[row.status]?.cls]">
+                  <i class="status-dot"></i>
+                  {{ statusMap[row.status]?.label }}
+                </span>
+              </td>
+              <td class="lc-item">{{ row.itemCode || '—' }}</td>
+              <td class="lc-item-name">{{ row.item || '—' }}</td>
+              <td class="lc-batch"><span class="batch-text">{{ row.batch || '—' }}</span></td>
+              <td class="lc-qty">{{ row.stock || 0 }}</td>
+            </tr>
+            <tr v-if="pagedLocList.length === 0">
+              <td colspan="7" class="empty-cell">暂无库位数据 · 请先在后台维护仓库库位信息</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-pagination">
+        <span class="page-info">共 {{ totalLocItems }} 条数据</span>
+        <div class="page-size">
+          <span>每页</span>
+          <select v-model="pageSize" @change="changeSize(pageSize)">
+            <option :value="10">10</option>
+            <option :value="20">20</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+        </div>
+        <div class="page-controls">
+          <button :disabled="currentPage === 1" @click="changePage(currentPage - 1)">‹</button>
+          <span class="page-num">{{ currentPage }} / {{ totalLocPages || 1 }}</span>
+          <button :disabled="currentPage === totalLocPages || totalLocPages === 0" @click="changePage(currentPage + 1)">›</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</template>

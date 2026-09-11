@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.upc.wms.mapper.InvStocktakeOrderMapper">
+
+  <select id="selectByFilter" resultType="com.upc.wms.vo.StocktakeListVO">
+    SELECT
+      o.stocktake_id AS stocktakeId,
+      o.stocktake_no AS stocktakeNo,
+      o.warehouse_id AS warehouseId,
+      o.stocktake_scope AS stocktakeScope,
+      o.stocktake_type AS stocktakeType,
+      o.stocktake_status AS stocktakeStatus,
+      o.created_by AS createdBy,
+      o.created_at AS createdAt,
+
+      COALESCE(diff.difference_item_count, 0) AS differenceItemCount,
+      COALESCE(diff.difference_qty_total, 0) AS differenceQtyTotal,
+
+      a.adjustment_id AS adjustmentId,
+      a.adjustment_no AS adjustmentNo,
+      a.adjustment_status AS adjustmentStatus
+
+    FROM inv_stocktake_order o
+
+    LEFT JOIN (
+      SELECT
+        stocktake_id,
+        COUNT(*) AS difference_item_count,
+        COALESCE(SUM(ABS(COALESCE(difference_qty, counted_qty - book_qty, 0))), 0) AS difference_qty_total
+      FROM inv_stocktake_line
+      WHERE COALESCE(difference_qty, counted_qty - book_qty, 0) != 0
+      GROUP BY stocktake_id
+    ) diff ON diff.stocktake_id = o.stocktake_id
+
+    LEFT JOIN inv_adjustment_order a ON a.stocktake_id = o.stocktake_id
+
+    WHERE 1 = 1
+
+    <if test="warehouseId != null">
+      AND o.warehouse_id = #{warehouseId,jdbcType=BIGINT}
+    </if>
+
+    <if test="status != null and status != '' and status != 'ALL'">
+      AND o.stocktake_status = #{status,jdbcType=VARCHAR}
+    </if>
+
+    <if test="keyword != null and keyword != ''">
+      AND (
+        o.stocktake_no LIKE CONCAT('%', #{keyword}, '%')
+        OR o.stocktake_scope LIKE CONCAT('%', #{keyword}, '%')
+      )
+    </if>
+
+    ORDER BY o.created_at DESC
+  </select>
+
+  <select id="selectOverview" resultType="com.upc.wms.vo.StocktakeOverviewVO">
+    SELECT
+      COUNT(*) AS totalCount,
+
+      COALESCE(SUM(
+        CASE WHEN stocktake_status = 'DRAFT' THEN 1 ELSE 0 END
+      ), 0) AS draftCount,
+
+      0 AS pendingCount,
+
+      COALESCE(SUM(
+        CASE WHEN stocktake_status = 'COUNTING' THEN 1 ELSE 0 END
+      ), 0) AS countingCount,
+
+      0 AS differencePendingCount,
+
+      0 AS adjustmentCreatedCount,
+
+      COALESCE(SUM(
+        CASE WHEN stocktake_status = 'COMPLETED' THEN 1 ELSE 0 END
+      ), 0) AS completedCount
+    FROM inv_stocktake_order
+    WHERE warehouse_id = #{warehouseId,jdbcType=BIGINT}
+  </select>
+
+</mapper>
