@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif">
+  <defs>
+    <linearGradient id="tbg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b2823"/><stop offset="0.55" stop-color="#243830"/><stop offset="1" stop-color="#2f4a3d"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fd0a8" stop-opacity="0.35"/><stop offset="1" stop-color="#8fd0a8" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="wsh" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+    <clipPath id="mini"><rect x="560" y="120" width="580" height="380" rx="16"/></clipPath>
+  </defs>
+  <rect width="1200" height="560" fill="url(#tbg)"/>
+  <circle cx="1050" cy="40" r="260" fill="url(#glow)"/>
+  <rect x="60" y="54" width="52" height="52" rx="14" fill="#8fd0a8"/>
+  <path d="M74 88 L86 68 L98 88 Z" fill="#1b2823"/>
+  <text x="128" y="92" font-size="30" fill="#ffffff" font-weight="800" text-anchor="start" opacity="1">WellLog WMS</text>
+  <text x="128" y="122" font-size="15" fill="#a9c4b5" font-weight="400" text-anchor="start" opacity="1">AI 多智能体仓储管理平台</text>
+  <text x="60" y="200" font-size="40" fill="#ffffff" font-weight="800" text-anchor="start" opacity="1">让仓库自己会思考</text>
+  <text x="60" y="236" font-size="15" fill="#bcd3c6" font-weight="400" text-anchor="start" opacity="1">Prompt-to-Warehouse：一句话下发任务，多智能体协同完成收货、质检、出库与盘点</text>
+  <circle cx="78" cy="250" r="5" fill="#8fd0a8" opacity="1"/><text x="94" y="255" font-size="14.5" fill="#dfe9e2" font-weight="400" text-anchor="start" opacity="1">多智能体协同编排</text><circle cx="78" cy="284" r="5" fill="#8fd0a8" opacity="1"/><text x="94" y="289" font-size="14.5" fill="#dfe9e2" font-weight="400" text-anchor="start" opacity="1">DeepSeek 任务理解与规划</text><circle cx="78" cy="318" r="5" fill="#8fd0a8" opacity="1"/><text x="94" y="323" font-size="14.5" fill="#dfe9e2" font-weight="400" text-anchor="start" opacity="1">PDA 扫码防错拣货</text><circle cx="78" cy="352" r="5" fill="#8fd0a8" opacity="1"/><text x="94" y="357" font-size="14.5" fill="#dfe9e2" font-weight="400" text-anchor="start" opacity="1">OpenCV 视觉质检对比</text>
+  <rect x="60" y="400" width="118" height="36" rx="10" fill="#8fd0a8" stroke="none" stroke-width="1" opacity="1"/>
+  <text x="119" y="424" font-size="14" fill="#16211b" font-weight="700" text-anchor="middle" opacity="1">了解项目</text>
+  <rect x="190" y="400" width="150" height="36" rx="10" fill="none" stroke="#8fd0a8" stroke-width="1.5" opacity="1"/>
+  <text x="265" y="424" font-size="14" fill="#cfe6d8" font-weight="600" text-anchor="middle" opacity="1">查看在线演示</text>
+  <g filter="url(#wsh)">
+    <rect x="560" y="120" width="580" height="380" rx="16" fill="#ffffff"/>
+  </g>
+  <g clip-path="url(#mini)">
+    <rect x="560" y="120" width="580" height="46" fill="#f3f6f4"/>
+    <circle cx="584" cy="143" r="5" fill="#e07b6a" opacity="1"/><circle cx="600" cy="143" r="5" fill="#e6c15a" opacity="1"/><circle cx="616" cy="143" r="5" fill="#7fc08a" opacity="1"/>
+    <rect x="560" y="166" width="150" height="334" fill="#22322b"/>
+    <rect x="572" y="182" width="126" height="30" rx="8" fill="#ffffff" stroke="none" stroke-width="1" opacity="0.12"/><circle cx="590" cy="197" r="4" fill="#8fd0a8" opacity="1"/><text x="604" y="202" font-size="12" fill="#ffffff" font-weight="400" text-anchor="start" opacity="1">工作台</text><circle cx="590" cy="237" r="4" fill="#ffffff" opacity="0.4"/><text x="604" y="242" font-size="12" fill="#ffffff" font-weight="400" text-anchor="start" opacity="0.6">智能体工会</text><circle cx="590" cy="277" r="4" fill="#ffffff" opacity="0.4"/><text x="604" y="282" font-size="12" fill="#ffffff" font-weight="400" text-anchor="start" opacity="0.6">出库协同</text><circle cx="590" cy="317" r="4" fill="#ffffff" opacity="0.4"/><text x="604" y="322" font-size="12" fill="#ffffff" font-weight="400" text-anchor="start" opacity="0.6">库存盘点</text><circle cx="590" cy="357" r="4" fill="#ffffff" opacity="0.4"/><text x="604" y="362" font-size="12" fill="#ffffff" font-weight="400" text-anchor="start" opacity="0.6">数据分析</text>
+    <text x="734" y="208" font-size="18" fill="#2c3b34" font-weight="700" text-anchor="start" opacity="1">下午好，李工</text>
+    <text x="734" y="230" font-size="11.5" fill="#8a9891" font-weight="400" text-anchor="start" opacity="1">今日 12 项待办 · 3 项异常</text>
+    <rect x="730" y="246" width="392" height="66" rx="10" fill="#f5f9f6" stroke="#e2e8e4" stroke-width="1" opacity="1"/>
+    <circle cx="756" cy="279" r="15" fill="#587766" opacity="0.15"/>
+    <text x="756" y="284" font-size="11" fill="#587766" font-weight="700" text-anchor="middle" opacity="1">AI</text>
+    <text x="780" y="274" font-size="12" fill="#2c3b34" font-weight="400" text-anchor="start" opacity="1">把 SO-20260712 拆成领料单</text>
+    <text x="780" y="294" font-size="10.5" fill="#8a9891" font-weight="400" text-anchor="start" opacity="1">识别意图：待执行 → 人工确认后编排</text>
+    <rect x="730" y="326" width="122" height="74" rx="10" fill="#fff" stroke="#e2e8e4" stroke-width="1" opacity="1"/><rect x="730" y="326" width="4" height="74" rx="2" fill="#587766" stroke="none" stroke-width="1" opacity="1"/><text x="748" y="352" font-size="11" fill="#8a9891" font-weight="400" text-anchor="start" opacity="1">待出库单</text><text x="748" y="384" font-size="22" fill="#587766" font-weight="700" text-anchor="start" opacity="1">18</text><rect x="864" y="326" width="122" height="74" rx="10" fill="#fff" stroke="#e2e8e4" stroke-width="1" opacity="1"/><rect x="864" y="326" width="4" height="74" rx="2" fill="#2f9b5f" stroke="none" stroke-width="1" opacity="1"/><text x="882" y="352" font-size="11" fill="#8a9891" font-weight="400" text-anchor="start" opacity="1">拣货任务</text><text x="882" y="384" font-size="22" fill="#2f9b5f" font-weight="700" text-anchor="start" opacity="1">7</text><rect x="998" y="326" width="122" height="74" rx="10" fill="#fff" stroke="#e2e8e4" stroke-width="1" opacity="1"/><rect x="998" y="326" width="4" height="74" rx="2" fill="#b4553f" stroke="none" stroke-width="1" opacity="1"/><text x="1016" y="352" font-size="11" fill="#8a9891" font-weight="400" text-anchor="start" opacity="1">库存异常</text><text x="1016" y="384" font-size="22" fill="#b4553f" font-weight="700" text-anchor="start" opacity="1">3</text>
+    <rect x="730" y="416" width="392" height="84" rx="10" fill="#fff" stroke="#e2e8e4" stroke-width="1" opacity="1"/>
+    <text x="748" y="442" font-size="13" fill="#2c3b34" font-weight="700" text-anchor="start" opacity="1">出库协同</text>
+    <rect x="748" y="458" width="80" height="26" rx="6" fill="#587766" stroke="none" stroke-width="1" opacity="1"/><text x="788" y="475" font-size="10" fill="#fff" font-weight="400" text-anchor="middle" opacity="1">待分配 3</text><rect x="840" y="458" width="80" height="26" rx="6" fill="#eef2ef" stroke="none" stroke-width="1" opacity="1"/><text x="880" y="475" font-size="10" fill="#8a9891" font-weight="400" text-anchor="middle" opacity="1">拣货中 4</text><rect x="932" y="458" width="80" height="26" rx="6" fill="#eef2ef" stroke="none" stroke-width="1" opacity="1"/><text x="972" y="475" font-size="10" fill="#8a9891" font-weight="400" text-anchor="middle" opacity="1">待复核 2</text><rect x="1024" y="458" width="80" height="26" rx="6" fill="#eef2ef" stroke="none" stroke-width="1" opacity="1"/><text x="1064" y="475" font-size="10" fill="#8a9891" font-weight="400" text-anchor="middle" opacity="1">已发运 5</text>
+  </g>
+</svg>
