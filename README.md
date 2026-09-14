@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/teaser.svg" alt="WellLog WMS system teaser" width="860">
+  <img src="assets/teaser.png" alt="WellLog WMS system teaser" width="860">
   <p>
     <img src="https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white" alt="Java 17">
     <img src="https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot 3.5">
@@ -50,14 +50,14 @@
 
 <table>
   <tr>
-    <td width="33%" align="center" valign="top"><a href="assets/demo-workbench.svg"><img src="assets/demo-workbench.svg" alt="全角色 AI 工作台" width="100%"></a><br><strong>全角色 AI 工作台</strong><br><sub>一句话下发任务，自动判别意图与待办</sub></td>
-    <td width="33%" align="center" valign="top"><a href="assets/demo-agent-union.svg"><img src="assets/demo-agent-union.svg" alt="智能体工会" width="100%"></a><br><strong>智能体工会</strong><br><sub>15 位智能体 · 四层协同 · 技能与知识标签</sub></td>
-    <td width="33%" align="center" valign="top"><a href="assets/demo-outbound.svg"><img src="assets/demo-outbound.svg" alt="出库协同看板" width="100%"></a><br><strong>出库协同看板</strong><br><sub>按可用库存自动推荐 FIFO 批次与库位</sub></td>
+    <td width="33%" align="center" valign="top"><a href="assets/demo-workbench.png"><img src="assets/demo-workbench.png" alt="全角色 AI 工作台" width="100%"></a><br><strong>全角色 AI 工作台</strong><br><sub>一句话下发任务，自动判别意图与待办</sub></td>
+    <td width="33%" align="center" valign="top"><a href="assets/demo-agent-union.png"><img src="assets/demo-agent-union.png" alt="智能体工会" width="100%"></a><br><strong>智能体工会</strong><br><sub>15 位智能体 · 四层协同 · 技能与知识标签</sub></td>
+    <td width="33%" align="center" valign="top"><a href="assets/demo-outbound.png"><img src="assets/demo-outbound.png" alt="出库协同看板" width="100%"></a><br><strong>出库协同看板</strong><br><sub>按可用库存自动推荐 FIFO 批次与库位</sub></td>
   </tr>
   <tr>
-    <td width="33%" align="center" valign="top"><a href="assets/demo-pda-scan.svg"><img src="assets/demo-pda-scan.svg" alt="PDA 扫码拣货" width="100%"></a><br><strong>PDA 扫码拣货</strong><br><sub>库位 / 物料 / 批次三重校验防错拣</sub></td>
-    <td width="33%" align="center" valign="top"><a href="assets/demo-inventory-check.svg"><img src="assets/demo-inventory-check.svg" alt="库存盘点" width="100%"></a><br><strong>库存盘点</strong><br><sub>账面 vs 实盘自动比对，差异一键调整</sub></td>
-    <td width="33%" align="center" valign="top"><a href="assets/demo-quality-compare.svg"><img src="assets/demo-quality-compare.svg" alt="视觉质检对比" width="100%"></a><br><strong>视觉质检对比</strong><br><sub>OpenCV + SSIM 圈出差异并输出热力图</sub></td>
+    <td width="33%" align="center" valign="top"><a href="assets/demo-pda-scan.png"><img src="assets/demo-pda-scan.png" alt="PDA 扫码拣货" width="100%"></a><br><strong>PDA 扫码拣货</strong><br><sub>库位 / 物料 / 批次三重校验防错拣</sub></td>
+    <td width="33%" align="center" valign="top"><a href="assets/demo-inventory-control.png"><img src="assets/demo-inventory-control.png" alt="库存控制" width="100%"></a><br><strong>库存控制</strong><br><sub>多批次库位与可用量一览，盘点差异自动比对</sub></td>
+    <td width="33%" align="center" valign="top"><a href="assets/demo-quality-compare.png"><img src="assets/demo-quality-compare.png" alt="视觉质检对比" width="100%"></a><br><strong>视觉质检对比</strong><br><sub>OpenCV + SSIM 圈出差异并输出热力图</sub></td>
   </tr>
 </table>
 
@@ -67,12 +67,12 @@
 
 <table>
   <tr>
-    <td width="50%" align="center"><img src="assets/dash-assistant.svg" alt="AI 助手意图分流"><br><strong>AI 助手 · 意图分流</strong><br><sub>问答直接回答，动作需人工确认后才编排 Agent</sub></td>
-    <td width="50%" align="center"><img src="assets/dash-agent-monitor.svg" alt="Agent 任务监控"><br><strong>Agent 任务监控</strong><br><sub>步骤级执行日志与 AI 分析报告全程可回溯</sub></td>
+    <td width="50%" align="center"><img src="assets/dash-assistant.png" alt="AI 助手意图分流"><br><strong>AI 助手 · 意图分流</strong><br><sub>问答直接回答，动作需人工确认后才编排 Agent</sub></td>
+    <td width="50%" align="center"><img src="assets/dash-agent-monitor.png" alt="Agent 任务监控"><br><strong>Agent 任务监控</strong><br><sub>步骤级执行日志与 AI 分析报告全程可回溯</sub></td>
   </tr>
   <tr>
-    <td width="50%" align="center"><img src="assets/dash-analytics.svg" alt="数据分析"><br><strong>数据分析</strong><br><sub>出库及时率、库存周转、拣货准确率等经营指标</sub></td>
-    <td width="50%" align="center"><img src="assets/dash-trace.svg" alt="批次追溯"><br><strong>批次追溯</strong><br><sub>一个批次从入库到出库的全链路证据链</sub></td>
+    <td width="50%" align="center"><img src="assets/dash-analytics.png" alt="数据分析"><br><strong>数据分析</strong><br><sub>出库及时率、库存周转、拣货准确率等经营指标</sub></td>
+    <td width="50%" align="center"><img src="assets/dash-trace.png" alt="批次追溯"><br><strong>批次追溯</strong><br><sub>一个批次从入库到出库的全链路证据链</sub></td>
   </tr>
 </table>
 
