@@ -10,7 +10,7 @@
 </div>
 
 <p align="center">
-  <img src="assets/teaser.gif" alt="WellLog multi-agent workflow demo" width="100%">
+  <img src="assets/teaser.gif" alt="WellLog multi-agent workflow demo" width="72%">
 </p>
 
 <a id="overview"></a>
