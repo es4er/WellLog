@@ -9,7 +9,9 @@
   </p>
 </div>
 
-![WellLog workflow demo](assets/welllog-demo.gif)
+<p align="center">
+  <img src="assets/teaser.gif" alt="WellLog multi-agent workflow demo" width="100%">
+</p>
 
 <a id="overview"></a>
 
