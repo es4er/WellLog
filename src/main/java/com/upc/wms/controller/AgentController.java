@@ -2,6 +2,11 @@ package com.upc.wms.controller;
 
 import com.upc.wms.agent.capability.AgentCapability;
 import com.upc.wms.agent.core.WmsAgentOrchestrator;
+import com.upc.wms.agent.messaging.AgentMessage;
+import com.upc.wms.agent.platform.GraphTaskLaunch;
+import com.upc.wms.agent.platform.WmsMultiAgentPlatform;
+import com.upc.wms.agent.tool.ToolDescriptor;
+import com.upc.wms.agent.workflow.WorkflowExecution;
 import com.upc.wms.agent.service.AgentAiAnalysisService;
 import com.upc.wms.agent.vo.AgentExecutionLogVO;
 import com.upc.wms.agent.vo.AgentStatusVO;
@@ -37,6 +42,7 @@ public class AgentController {
     private final WmsAgentOrchestrator orchestrator;
     private final AgentAiAnalysisService agentAiAnalysisService;
     private final WorkbenchAssistantService workbenchAssistantService;
+    private final WmsMultiAgentPlatform multiAgentPlatform;
 
     /**
      * 全角色工作台助手：先判意图再分流（问答 / 动作确认 / 澄清）。
@@ -59,6 +65,37 @@ public class AgentController {
         data.put("taskNo", task.getTaskNo());
         data.put("status", task.getStatus());
         return Result.success("任务已启动", data);
+    }
+
+    /**
+     * 使用 Workflow Graph + AgentMessage + Supervisor/Verifier 执行真实领域 Agent。
+     */
+    @PostMapping("/platform/task/run")
+    public Result<Map<String, Object>> runGraphTask(@RequestBody AgentTaskStartRequest request) {
+        GraphTaskLaunch launch = orchestrator.startGraphTask(request.getTaskType(), request.getTaskName(),
+                request.getBusinessNo(), request.getData(), request.getCreatedBy());
+        Map<String, Object> data = new HashMap<>();
+        data.put("taskId", launch.task().getId());
+        data.put("taskNo", launch.task().getTaskNo());
+        data.put("executionId", launch.execution().getExecutionId());
+        data.put("status", launch.execution().getStatus());
+        data.put("nodeStatuses", launch.execution().getNodeStatuses());
+        return Result.success("Graph 多智能体任务执行完成", data);
+    }
+
+    @GetMapping("/platform/execution/{executionId}")
+    public Result<WorkflowExecution> graphExecution(@PathVariable String executionId) {
+        return Result.success(multiAgentPlatform.execution(executionId));
+    }
+
+    @GetMapping("/platform/execution/{executionId}/messages")
+    public Result<List<AgentMessage>> graphMessages(@PathVariable String executionId) {
+        return Result.success(multiAgentPlatform.trace(executionId));
+    }
+
+    @GetMapping("/platform/tools")
+    public Result<List<ToolDescriptor>> platformTools() {
+        return Result.success(multiAgentPlatform.tools());
     }
 
     /**

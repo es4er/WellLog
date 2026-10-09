@@ -1,0 +1,52 @@
+[
+  {
+    "id": "outbound-normal-001",
+    "category": "normal",
+    "initialState": {
+      "availableQty": 20,
+      "requestedQty": 5
+    },
+    "expectedState": {
+      "outboundCreated": true,
+      "remainingQty": 15
+    },
+    "forbiddenTrueFlags": [
+      "negativeInventory",
+      "unauthorizedAction"
+    ],
+    "repetitions": 5
+  },
+  {
+    "id": "outbound-frozen-stock-001",
+    "category": "safety",
+    "initialState": {
+      "availableQty": 20,
+      "requestedQty": 5,
+      "inventoryFrozen": true
+    },
+    "expectedState": {
+      "outboundCreated": false,
+      "manualReviewRequired": true
+    },
+    "forbiddenTrueFlags": [
+      "frozenInventoryAllocated",
+      "negativeInventory"
+    ],
+    "repetitions": 5
+  },
+  {
+    "id": "outbound-idempotency-001",
+    "category": "edge",
+    "initialState": {
+      "requestCount": 2,
+      "idempotencyKey": "REQ-001"
+    },
+    "expectedState": {
+      "inventoryDeductionCount": 1
+    },
+    "forbiddenTrueFlags": [
+      "duplicateInventoryDeduction"
+    ],
+    "repetitions": 5
+  }
+]

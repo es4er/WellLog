@@ -6,6 +6,14 @@ import com.upc.wms.agent.capability.OrchestratorPlan;
 import com.upc.wms.agent.capability.OrchestratorPlanningService;
 import com.upc.wms.agent.log.AgentDecisionLogService;
 import com.upc.wms.agent.log.AgentTaskLogService;
+import com.upc.wms.agent.platform.GraphTaskLaunch;
+import com.upc.wms.agent.platform.WmsMultiAgentPlatform;
+import com.upc.wms.agent.workflow.ExecutionStatus;
+import com.upc.wms.agent.workflow.NodeExecutionResult;
+import com.upc.wms.agent.workflow.NodeStatus;
+import com.upc.wms.agent.workflow.WorkflowExecution;
+import com.upc.wms.agent.workflow.WorkflowGraph;
+import com.upc.wms.agent.workflow.WorkflowNode;
 import com.upc.wms.agent.vo.AgentExecutionLogVO;
 import com.upc.wms.agent.vo.AgentStatusVO;
 import com.upc.wms.agent.vo.AgentTaskStepVO;
@@ -19,6 +27,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
@@ -54,6 +63,12 @@ public class WmsAgentOrchestrator {
     private final AgentProperties agentProperties;
 
     private final Map<String, Agent> registry = new HashMap<>();
+    private WmsMultiAgentPlatform multiAgentPlatform;
+
+    @Autowired(required = false)
+    public void setMultiAgentPlatform(WmsMultiAgentPlatform multiAgentPlatform) {
+        this.multiAgentPlatform = multiAgentPlatform;
+    }
 
     @PostConstruct
     public void init() {
@@ -133,6 +148,51 @@ public class WmsAgentOrchestrator {
         dispatchTask(context, firstAgent);
 
         return reload(task.getId());
+    }
+
+    /**
+     * 使用新的 DAG 多智能体运行时同步执行任务。该入口保留原领域 Agent 与 Service，
+     * 但由 Workflow Graph、消息总线、Supervisor 和 Verifier 负责协作与治理。
+     */
+    public GraphTaskLaunch startGraphTask(String taskType, String taskName, String businessNo,
+                                          Map<String, Object> data, Long createdBy) {
+        validateTaskType(taskType);
+        if (!Boolean.TRUE.equals(agentProperties.getEnabled())) {
+            throw new BusinessException("多智能体协作模块已禁用（agent.enabled=false）");
+        }
+        if (multiAgentPlatform == null) {
+            throw new BusinessException("Workflow Graph 运行时未初始化");
+        }
+
+        AgentTask task = taskLogService.createTask(taskType, taskName, businessNo, createdBy);
+        AgentContext context = new AgentContext();
+        context.setTaskId(task.getId());
+        context.setTaskNo(task.getTaskNo());
+        context.setTaskType(taskType);
+        context.setBusinessNo(businessNo);
+        context.setCreatedBy(createdBy);
+        context.setData(data == null ? new HashMap<>() : new HashMap<>(data));
+
+        OrchestratorPlan plan = planningService.plan(taskType, taskName, businessNo, context.getData());
+        applyPlanToContext(context, plan);
+        logPlan(task.getId(), plan);
+        WorkflowGraph graph = multiAgentPlatform.graphFromPlan(task.getTaskNo(), plan);
+        taskLogService.log(task.getId(), null, AgentNames.ORCHESTRATOR, "INFO",
+                "Workflow Graph 已创建: " + graph.id() + "，节点数=" + graph.nodes().size());
+
+        WorkflowExecution execution = multiAgentPlatform.execute(graph, context);
+        persistGraphExecution(task.getId(), graph, execution);
+        String finalStatus = switch (execution.getStatus()) {
+            case SUCCESS -> AgentStatus.SUCCESS.name();
+            case MANUAL_REQUIRED -> AgentStatus.MANUAL_REQUIRED.name();
+            case FAILED, RUNNING -> AgentStatus.FAILED.name();
+        };
+        taskLogService.finishTask(task.getId(), finalStatus, execution.getErrorMessage());
+        taskLogService.log(task.getId(), null, AgentNames.ORCHESTRATOR,
+                execution.getStatus() == ExecutionStatus.SUCCESS ? "INFO" : "WARN",
+                "Graph 执行结束: executionId=" + execution.getExecutionId()
+                        + " | status=" + execution.getStatus());
+        return new GraphTaskLaunch(reload(task.getId()), execution);
     }
 
     /**
@@ -240,6 +300,29 @@ public class WmsAgentOrchestrator {
 
     public AgentResult executeAgent(Agent agent, AgentContext context) {
         return agent.handle(context);
+    }
+
+    private void persistGraphExecution(Long taskId, WorkflowGraph graph, WorkflowExecution execution) {
+        int stepNo = 1;
+        for (WorkflowNode node : graph.nodes()) {
+            NodeStatus nodeStatus = execution.getNodeStatuses().get(node.id());
+            NodeExecutionResult result = execution.getResults().get(node.id());
+            AgentTaskStep step = taskLogService.startStep(taskId, stepNo++, node.agentName(),
+                    AgentNames.label(node.agentName()), Map.of("workflowNodeId", node.id()));
+            Map<String, Object> output = new LinkedHashMap<>();
+            output.put("workflowNodeId", node.id());
+            output.put("attempts", execution.getAttempts().get(node.id()));
+            if (result != null) {
+                output.putAll(result.outputs());
+                output.put("message", result.message());
+            }
+            String nextAgent = result == null ? null : (String) result.outputs().get("_nextAgent");
+            String error = nodeStatus == NodeStatus.FAILED || nodeStatus == NodeStatus.MANUAL_REQUIRED
+                    ? (result == null ? execution.getErrorMessage() : result.message()) : null;
+            taskLogService.finishStep(step, nodeStatus.name(), output, nextAgent, error);
+            taskLogService.updateSnapshot(node.agentName(), nodeStatus.name(), null,
+                    nodeStatus == NodeStatus.SUCCESS, step.getDurationMs());
+        }
     }
 
     public void failTask(Long taskId, String errorMessage) {

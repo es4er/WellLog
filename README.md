@@ -4,13 +4,12 @@
   <p>面向制造业仓储流程的可审计多智能体研究原型</p>
   <p>
     <a href="#overview">Overview</a> ·
-    <a href="#method">Method</a> ·
     <a href="#system-snapshots">Snapshots</a> ·
     <a href="#quick-start">Quick Start</a>
   </p>
 </div>
 
-![WellLog multi-agent platform teaser](assets/teaser.png)
+![WellLog workflow demo](assets/welllog-demo.gif)
 
 <a id="overview"></a>
 
@@ -20,28 +19,9 @@ WellLog 探索如何把大模型的任务规划能力引入仓储管理，同时
 
 项目覆盖收货、质检、入库、出库、库存、盘点和移库等流程，并提供 Vue 工作台、Spring Boot 多智能体内核与独立的视觉质检服务。
 
-<a id="method"></a>
+## Architecture
 
-## Method
-
-```mermaid
-flowchart LR
-    U["Natural-language task"] --> O["Orchestrator"]
-    O --> P["Plan & capability routing"]
-    P --> A["Domain agents"]
-    A --> D[("WMS data")]
-    A --> H{"Human approval"}
-    H --> A
-    A --> T["Trace & audit"]
-```
-
-核心设计只有三条：
-
-- **模型负责规划，系统负责执行。** LLM 解析目标并生成候选链路，不直接修改业务单据。
-- **能力与数据均有边界。** Agent 通过能力目录声明职责、可见字段、数据表和可执行任务。
-- **执行过程可审计。** 任务、步骤、决策、异常和人工确认均被结构化记录。
-
-当前原型包含 1 个总控与 15 个领域智能体，按决策、策略、执行和辅助四层组织；模型不可用时可回退到规则链路。
+WellLog 的运行时由 Workflow Graph、显式 AgentMessage、受权限与幂等约束的 Tool Registry、Supervisor/Verifier 以及领域 Agent 适配层组成。确定性库存操作仍由原有 Service 执行，Agent 负责规划、协同和验证。新的图执行入口为 `POST /agent/platform/task/run`，执行状态、消息轨迹与工具目录分别由 `/agent/platform/execution/{id}`、`/messages` 和 `/agent/platform/tools` 查询。
 
 ## System Snapshots
 
@@ -117,6 +97,10 @@ cd frontend-ai-workbench && npm run build
 
 仓库已包含多智能体编排、权限分流与编号格式化测试，以及用于复现实验流程的示例 SQL。当前实现是研究与教学原型，不建议未经安全审查直接用于生产环境。
 
+## Evaluation
+
+`eval/benchmark/wms-v1/` 提供 WMS-Eval 场景格式，后端 `com.upc.wms.agent.eval` 按最终状态、安全约束和重复运行稳定性评分。建议在同一数据快照上比较规则工作流、单 Agent、中央式多 Agent 与 Supervisor 多 Agent，并报告成功率、状态准确率、安全违规率、时延及 `pass^k`。
+
 ## Citation
 
 若本项目对你的研究或课程有帮助，可引用本仓库：
@@ -126,7 +110,7 @@ cd frontend-ai-workbench && npm run build
   title  = {WellLog: An Auditable Multi-Agent Platform for Warehouse Operations},
   author = {WellLog Contributors},
   year   = {2026},
-  url    = {https://github.com/es4er/wms-agent-platform}
+  url    = {https://github.com/es4er/WellLog}
 }
 ```
 
