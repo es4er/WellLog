@@ -9,7 +9,7 @@
   </p>
 </div>
 
-![WellLog workflow demo](assets/welllog-demo.gif)
+![WellLog workflow demo](assets/teaser.gif)
 
 <a id="overview"></a>
 
